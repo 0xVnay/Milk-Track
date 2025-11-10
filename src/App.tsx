@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 import { useForm } from 'react-hook-form'
+import { useAuth } from './contexts/AuthContext'
+import { Login } from './components/Login'
+import { saveReceipt } from './services/receiptService'
 import './App.css'
 
 interface ParsedData {
@@ -17,10 +20,13 @@ interface ParsedData {
 }
 
 function App() {
+  const { user, loading: authLoading, logout } = useAuth()
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [compressedBlob, setCompressedBlob] = useState<Blob | null>(null)
   const [parsedData, setParsedData] = useState<ParsedData | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<ParsedData>({
@@ -34,6 +40,23 @@ function App() {
     }
   }, [parsedData, reset])
 
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="app-container">
+        <div className="loading-screen">
+          <div className="spinner"></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show login if not authenticated
+  if (!user) {
+    return <Login />
+  }
+
   const getImageCaptureDate = (file: File): string | null => {
     // Get file's last modified date as fallback
     const fileDate = new Date(file.lastModified)
@@ -41,6 +64,50 @@ function App() {
     const month = String(fileDate.getMonth() + 1).padStart(2, '0')
     const year = fileDate.getFullYear()
     return `${day}/${month}/${year}`
+  }
+
+  const compressImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d')
+
+          // Calculate new dimensions (max 1600px width/height while maintaining aspect ratio)
+          let width = img.width
+          let height = img.height
+          const maxSize = 1600
+
+          if (width > height && width > maxSize) {
+            height = (height * maxSize) / width
+            width = maxSize
+          } else if (height > maxSize) {
+            width = (width * maxSize) / height
+            height = maxSize
+          }
+
+          canvas.width = width
+          canvas.height = height
+
+          // Draw and compress
+          ctx?.drawImage(img, 0, 0, width, height)
+          canvas.toBlob(
+            (blob) => {
+              if (blob) resolve(blob)
+              else reject(new Error('Compression failed'))
+            },
+            'image/jpeg',
+            0.85 // 85% quality - good balance between quality and size
+          )
+        }
+        img.onerror = reject
+        img.src = e.target?.result as string
+      }
+      reader.onerror = reject
+      reader.readAsDataURL(file)
+    })
   }
 
   const convertImageToBase64 = (file: File): Promise<{ base64: string; mimeType: string }> => {
@@ -66,19 +133,25 @@ function App() {
       return
     }
 
-    // Create image preview
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      setSelectedImage(e.target?.result as string)
-    }
-    reader.readAsDataURL(file)
-
     // Process image with Gemini
     setIsProcessing(true)
     setParsedData(null)
 
     try {
-      const { base64, mimeType } = await convertImageToBase64(file)
+      // Compress image first
+      const compressed = await compressImage(file)
+      console.log(`Original size: ${(file.size / 1024).toFixed(2)}KB, Compressed size: ${(compressed.size / 1024).toFixed(2)}KB`)
+
+      // Store compressed blob for later save
+      setCompressedBlob(compressed)
+
+      // Create image preview from compressed blob
+      const previewUrl = URL.createObjectURL(compressed)
+      setSelectedImage(previewUrl)
+
+      // Convert compressed blob to base64 for Gemini API
+      const compressedFile = new File([compressed], file.name, { type: 'image/jpeg' })
+      const { base64, mimeType } = await convertImageToBase64(compressedFile)
 
       const genAI = new GoogleGenerativeAI(apiKey)
       const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' })
@@ -148,6 +221,7 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
 
   const handleReset = () => {
     setSelectedImage(null)
+    setCompressedBlob(null)
     setParsedData(null)
     setIsEditing(false)
     if (fileInputRef.current) {
@@ -164,11 +238,47 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
     setIsEditing(false)
   }
 
+  const handleSaveReceipt = async () => {
+    if (!user || !parsedData || !compressedBlob) return
+
+    setIsSaving(true)
+    try {
+      const receiptData = {
+        date: parsedData.date || '',
+        quantity: parsedData.quantity || '',
+        fat: parsedData.fat || '',
+        clr: parsedData.clr || '',
+        fat_kg: parsedData.fatKg,
+        snf_kg: parsedData.snfKg,
+        base_rate: parsedData.baseRate || '',
+        rate: parsedData.rate || '',
+        amount: parsedData.amount || '',
+        image_url: '' // Will be filled by saveReceipt
+      }
+
+      await saveReceipt(user.id, receiptData, compressedBlob)
+      alert('Receipt saved successfully!')
+      handleReset()
+    } catch (error) {
+      console.error('Error saving receipt:', error)
+      alert('Failed to save receipt. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
   return (
     <div className="app-container">
       <header className="app-header">
-        <h1>Dairy Records</h1>
-        <p className="subtitle">Scan & Parse Dairy Receipts</p>
+        <div className="header-content">
+          <div>
+            <h1>India Delightt</h1>
+            <p className="subtitle">Track Your Dairy Receipts</p>
+          </div>
+          <button onClick={logout} className="logout-button">
+            Logout
+          </button>
+        </div>
       </header>
 
       <main className="main-content">
@@ -411,9 +521,26 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
               </form>
             )}
 
-            <button className="reset-button" onClick={handleReset}>
-              Scan Another Receipt
-            </button>
+            {parsedData && !isProcessing && (
+              <div className="action-buttons">
+                <button
+                  className="save-button"
+                  onClick={handleSaveReceipt}
+                  disabled={isSaving || isEditing}
+                >
+                  {isSaving ? 'Saving...' : 'Save Receipt'}
+                </button>
+                <button className="reset-button" onClick={handleReset} disabled={isSaving}>
+                  Scan Another
+                </button>
+              </div>
+            )}
+
+            {!parsedData && selectedImage && !isProcessing && (
+              <button className="reset-button" onClick={handleReset}>
+                Scan Another Receipt
+              </button>
+            )}
           </div>
         )}
       </main>

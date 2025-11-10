@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'Dairy Records',
-        short_name: 'Dairy',
-        description: 'Mobile-first dairy record management with image parsing',
+        name: 'India Delightt',
+        short_name: 'India-delightt',
+        description: 'Track your dairy receipts with AI-powered parsing',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',

@@ -1,6 +1,6 @@
-# Dairy Records - Mobile-First Dairy Receipt Parser
+# MilkTrack - Dairy Receipt Manager
 
-A Progressive Web App (PWA) for scanning and parsing dairy receipts using Google Gemini AI vision API.
+A Progressive Web App (PWA) for tracking dairy receipts using Google Gemini AI vision API and Supabase.
 
 ## Features
 
