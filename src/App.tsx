@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { useForm } from 'react-hook-form'
 import { useAuth } from './contexts/AuthContext'
 import { Login } from './components/Login'
+import { Records } from './components/Records'
 import { saveReceipt } from './services/receiptService'
 import './App.css'
 
@@ -19,8 +20,11 @@ interface ParsedData {
   amount?: string
 }
 
+type View = 'upload' | 'records'
+
 function App() {
   const { user, loading: authLoading, logout } = useAuth()
+  const [currentView, setCurrentView] = useState<View>('upload')
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [compressedBlob, setCompressedBlob] = useState<Blob | null>(null)
   const [parsedData, setParsedData] = useState<ParsedData | null>(null)
@@ -29,7 +33,7 @@ function App() {
   const [isSaving, setIsSaving] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ParsedData>({
+  const { register, handleSubmit, reset } = useForm<ParsedData>({
     defaultValues: parsedData || {}
   })
 
@@ -462,11 +466,11 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
                         type="number"
                         step="0.01"
                         min="0.1"
-                        max="5"
+                        max="100"
                         className="edit-input"
                         {...register('baseRate', {
                           min: { value: 0.1, message: 'Min ₹0.1' },
-                          max: { value: 5, message: 'Max ₹5' },
+                          max: { value: 100, message: 'Max ₹100' },
                           valueAsNumber: false
                         })}
                         placeholder="0.00"
