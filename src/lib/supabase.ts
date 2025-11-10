@@ -7,4 +7,14 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables')
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storageKey: 'milktrack-auth',
+    storage: window.localStorage,
+    // Flow type determines session length - use 'pkce' for longer sessions
+    flowType: 'pkce'
+  }
+})

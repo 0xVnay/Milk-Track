@@ -1,0 +1,309 @@
+.records-container {
+  width: 100%;
+  padding: 1rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.records-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 50vh;
+  color: white;
+}
+
+.records-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.records-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.records-stats {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.stat-item {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.9rem;
+}
+
+.stat-item strong {
+  font-size: 1.1rem;
+  color: white;
+}
+
+.search-bar {
+  margin-bottom: 1rem;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  backdrop-filter: blur(10px);
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  -webkit-overflow-scrolling: touch;
+}
+
+.records-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+}
+
+.records-table thead {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+}
+
+.records-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.records-table th:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.th-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sort-icon {
+  opacity: 0.7;
+}
+
+.records-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.records-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.records-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.records-table td {
+  padding: 1rem;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.view-image-link {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: inline-block;
+}
+
+.view-image-link:hover {
+  background: #667eea;
+  color: white;
+}
+
+.no-records {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.no-records p {
+  margin: 0.5rem 0;
+  color: white;
+  font-size: 1.1rem;
+}
+
+.no-records-hint {
+  opacity: 0.8;
+  font-size: 0.9rem !important;
+}
+
+/* Month Groups */
+.month-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.month-group {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.month-header {
+  margin: 0;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* Compact table styling */
+.records-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.records-table th {
+  padding: 0.75rem 0.5rem;
+  font-size: 0.9rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.records-table td {
+  padding: 0.75rem 0.5rem;
+  font-size: 0.95rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.amount-cell {
+  font-weight: 700;
+  color: #764ba2;
+}
+
+/* Extra columns - slightly muted and with border */
+.extra-col {
+  color: #666;
+  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-left: 1px solid #e0e0e0;
+}
+
+.view-image-link {
+  font-size: 1.2rem;
+  text-decoration: none;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.view-image-link:active {
+  transform: scale(1.2);
+}
+
+.entry-type-link {
+  font-size: 1.3rem;
+  text-decoration: none;
+  display: inline-block;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.entry-type-link:hover {
+  transform: scale(1.1);
+}
+
+.entry-type-link:active {
+  transform: scale(1.2);
+}
+
+/* Totals row */
+.totals-row {
+  background: linear-gradient(135deg, #667eea15, #764ba215);
+  font-weight: 700;
+  border-top: 2px solid #667eea;
+}
+
+.totals-label {
+  text-align: right !important;
+  color: #667eea;
+  font-size: 0.95rem;
+  padding-right: 1rem !important;
+}
+
+.totals-value {
+  color: #764ba2;
+  font-size: 1.1rem;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .records-container {
+    padding: 0.5rem;
+  }
+
+  .records-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .month-header {
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .records-table th {
+    padding: 0.65rem 0.4rem;
+    font-size: 0.85rem;
+  }
+
+  .records-table td {
+    padding: 0.65rem 0.4rem;
+    font-size: 0.9rem;
+  }
+
+  .extra-col {
+    font-size: 0.8rem;
+  }
+
+  .totals-label {
+    font-size: 0.85rem;
+  }
+
+  .totals-value {
+    font-size: 1rem;
+  }
+
+  .view-image-link {
+    font-size: 1rem;
+  }
+}

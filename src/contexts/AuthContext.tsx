@@ -34,11 +34,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null)
+
+      // Refresh session on token expiration
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('Token refreshed successfully')
+      }
+
+      // Handle signed out
+      if (event === 'SIGNED_OUT') {
+        setUser(null)
+      }
     })
 
-    return () => subscription.unsubscribe()
+    // Set up periodic session refresh (every 30 minutes)
+    const refreshInterval = setInterval(async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session) {
+        await supabase.auth.refreshSession()
+      }
+    }, 30 * 60 * 1000) // 30 minutes
+
+    return () => {
+      subscription.unsubscribe()
+      clearInterval(refreshInterval)
+    }
   }, [])
 
   const login = async (email: string, password: string) => {

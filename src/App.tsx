@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { useForm } from 'react-hook-form'
 import { useAuth } from './contexts/AuthContext'
 import { Login } from './components/Login'
+import { Records } from './components/Records'
 import { saveReceipt } from './services/receiptService'
 import './App.css'
 
@@ -22,6 +23,8 @@ interface ParsedData {
 
 function App() {
   const { user, loading: authLoading, logout } = useAuth()
+  const [currentView, setCurrentView] = useState<'upload' | 'records'>('upload')
+  const [entryMode, setEntryMode] = useState<'camera' | 'manual'>('camera')
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [compressedBlob, setCompressedBlob] = useState<Blob | null>(null)
   const [parsedData, setParsedData] = useState<ParsedData | null>(null)
@@ -240,7 +243,60 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
   }
 
   const handleSaveReceipt = async () => {
-    if (!user || !parsedData || !compressedBlob) return
+    if (!user || !parsedData) return
+
+    // For manual entry, we need to create a dummy image blob
+    if (entryMode === 'manual' && !compressedBlob) {
+      setIsSaving(true)
+      try {
+        // Create a simple canvas with the receipt data as text
+        const canvas = document.createElement('canvas')
+        canvas.width = 400
+        canvas.height = 300
+        const ctx = canvas.getContext('2d')
+        if (ctx) {
+          ctx.fillStyle = 'white'
+          ctx.fillRect(0, 0, 400, 300)
+          ctx.fillStyle = 'black'
+          ctx.font = '16px Arial'
+          ctx.fillText('Manual Entry', 150, 50)
+          ctx.fillText(`Date: ${parsedData.date}`, 50, 100)
+          ctx.fillText(`Qty: ${parsedData.quantity}`, 50, 130)
+          ctx.fillText(`Fat: ${parsedData.fat}%`, 50, 160)
+          ctx.fillText(`Rate: ${parsedData.rate}`, 50, 190)
+          ctx.fillText(`Amount: ${parsedData.amount}`, 50, 220)
+        }
+
+        const blob = await new Promise<Blob>((resolve) => {
+          canvas.toBlob((b) => resolve(b!), 'image/jpeg', 0.8)
+        })
+
+        const receiptData = {
+          date: parsedData.date || '',
+          quantity: parsedData.quantity || '',
+          fat: parsedData.fat || '',
+          clr: parsedData.clr || '',
+          fat_kg: parsedData.fatKg,
+          snf_kg: parsedData.snfKg,
+          base_rate: parsedData.baseRate || '',
+          rate: parsedData.rate || '',
+          amount: parsedData.amount || '',
+          image_url: ''
+        }
+
+        await saveReceipt(user.id, receiptData, blob)
+        alert('Receipt saved successfully!')
+        handleReset()
+      } catch (error) {
+        console.error('Error saving receipt:', error)
+        alert('Failed to save receipt. Please try again.')
+      } finally {
+        setIsSaving(false)
+      }
+      return
+    }
+
+    if (!compressedBlob) return
 
     setIsSaving(true)
     try {
@@ -275,42 +331,176 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
           <div>
             <h1>India Delightt</h1>
             <p className="subtitle">Track Your Dairy Receipts</p>
+            {user && (
+              <p className="user-info">
+                {user.user_metadata?.full_name || user.email}
+              </p>
+            )}
           </div>
           <button onClick={logout} className="logout-button">
             Logout
           </button>
         </div>
+        <nav className="nav-tabs">
+          <button
+            className={`nav-tab ${currentView === 'upload' ? 'active' : ''}`}
+            onClick={() => setCurrentView('upload')}
+          >
+            Upload Receipt
+          </button>
+          <button
+            className={`nav-tab ${currentView === 'records' ? 'active' : ''}`}
+            onClick={() => setCurrentView('records')}
+          >
+            View Records
+          </button>
+        </nav>
       </header>
 
       <main className="main-content">
-        {!selectedImage ? (
-          <div className="upload-section">
-            <div className="upload-icon" onClick={handleCameraClick}>
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-                <circle cx="12" cy="13" r="4" />
-              </svg>
-              <p>Tap to capture or upload</p>
-            </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="file-input"
-            />
-          </div>
+        {currentView === 'records' ? (
+          <Records />
         ) : (
-          <div className="preview-section">
-            {isProcessing && (
-              <div className="processing-indicator">
-                <div className="spinner"></div>
-                <p>Analyzing image with Gemini AI...</p>
-              </div>
-            )}
+          <>
+            {!selectedImage && !parsedData ? (
+              <div className="upload-section">
+                <div className="entry-mode-toggle">
+                  <button
+                    className={`mode-button ${entryMode === 'camera' ? 'active' : ''}`}
+                    onClick={() => setEntryMode('camera')}
+                  >
+                    📷 Camera
+                  </button>
+                  <button
+                    className={`mode-button ${entryMode === 'manual' ? 'active' : ''}`}
+                    onClick={() => setEntryMode('manual')}
+                  >
+                    ✍️ Manual
+                  </button>
+                </div>
 
-            {parsedData && !isProcessing && (
-              <form className="parsed-data" onSubmit={handleSubmit(onSubmit)}>
+                {entryMode === 'camera' ? (
+                  <>
+                    <div className="upload-icon" onClick={handleCameraClick}>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                        <circle cx="12" cy="13" r="4" />
+                      </svg>
+                      <p>Tap to capture or upload</p>
+                    </div>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="file-input"
+                    />
+                  </>
+                ) : (
+                  <div className="manual-entry-form">
+                    <h3>Manual Entry</h3>
+                    <form onSubmit={handleSubmit((data) => {
+                      // Calculate CLR from SNF if SNF is provided
+                      const snfValue = data.snfKg || '0'
+                      const fatValue = data.fat || '0'
+                      const clr = (parseFloat(snfValue) + 0.25 * parseFloat(fatValue)).toFixed(2)
+
+                      // Convert date from YYYY-MM-DD to DD/MM/YYYY
+                      let formattedDate = data.date
+                      if (data.date && data.date.includes('-')) {
+                        const [year, month, day] = data.date.split('-')
+                        formattedDate = `${day}/${month}/${year}`
+                      }
+
+                      setParsedData({
+                        rawText: 'Manual entry',
+                        date: formattedDate,
+                        quantity: data.quantity,
+                        fat: data.fat,
+                        snfKg: data.snfKg,
+                        clr: clr,
+                        rate: data.rate,
+                        amount: data.amount
+                      })
+                    })}>
+                      <div className="form-group">
+                        <label>Date</label>
+                        <input
+                          type="date"
+                          className="date-input"
+                          defaultValue={new Date().toISOString().split('T')[0]}
+                          {...register('date', { required: true })}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Quantity (Liters)</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          placeholder="0.0"
+                          {...register('quantity', { required: true })}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Fat %</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          placeholder="0.0"
+                          {...register('fat', { required: true })}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>SNF %</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          placeholder="0.0"
+                          {...register('snfKg', { required: true })}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Rate</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          placeholder="0.0"
+                          {...register('rate', { required: true })}
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Amount</label>
+                        <input
+                          type="number"
+                          step="1"
+                          placeholder="0"
+                          {...register('amount', { required: true })}
+                        />
+                      </div>
+
+                      <button type="submit" className="submit-button">
+                        Continue
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="preview-section">
+                {isProcessing && (
+                  <div className="processing-indicator">
+                    <div className="spinner"></div>
+                    <p>Analyzing image with Gemini AI...</p>
+                  </div>
+                )}
+
+                {parsedData && !isProcessing && (
+                  <form className="parsed-data" onSubmit={handleSubmit(onSubmit)}>
                 <div className="header-section">
                   <h2>Extracted Data</h2>
                   {!isEditing ? (
@@ -519,30 +709,32 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
                     )}
                   </div>
                 </div>
-              </form>
-            )}
+                  </form>
+                )}
 
-            {parsedData && !isProcessing && (
-              <div className="action-buttons">
-                <button
-                  className="save-button"
-                  onClick={handleSaveReceipt}
-                  disabled={isSaving || isEditing}
-                >
-                  {isSaving ? 'Saving...' : 'Save Receipt'}
-                </button>
-                <button className="reset-button" onClick={handleReset} disabled={isSaving}>
-                  Scan Another
-                </button>
+                {parsedData && !isProcessing && (
+                  <div className="action-buttons">
+                    <button
+                      className="save-button"
+                      onClick={handleSaveReceipt}
+                      disabled={isSaving || isEditing}
+                    >
+                      {isSaving ? 'Saving...' : 'Save Receipt'}
+                    </button>
+                    <button className="reset-button" onClick={handleReset} disabled={isSaving}>
+                      Scan Another
+                    </button>
+                  </div>
+                )}
+
+                {!parsedData && selectedImage && !isProcessing && (
+                  <button className="reset-button" onClick={handleReset}>
+                    Scan Another Receipt
+                  </button>
+                )}
               </div>
             )}
-
-            {!parsedData && selectedImage && !isProcessing && (
-              <button className="reset-button" onClick={handleReset}>
-                Scan Another Receipt
-              </button>
-            )}
-          </div>
+          </>
         )}
       </main>
     </div>
