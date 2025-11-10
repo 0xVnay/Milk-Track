@@ -3,7 +3,6 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { useForm } from 'react-hook-form'
 import { useAuth } from './contexts/AuthContext'
 import { Login } from './components/Login'
-import { Records } from './components/Records'
 import { saveReceipt } from './services/receiptService'
 import './App.css'
 
@@ -20,11 +19,9 @@ interface ParsedData {
   amount?: string
 }
 
-type View = 'upload' | 'records'
 
 function App() {
   const { user, loading: authLoading, logout } = useAuth()
-  const [currentView, setCurrentView] = useState<View>('upload')
   const [selectedImage, setSelectedImage] = useState<string | null>(null)
   const [compressedBlob, setCompressedBlob] = useState<Blob | null>(null)
   const [parsedData, setParsedData] = useState<ParsedData | null>(null)
