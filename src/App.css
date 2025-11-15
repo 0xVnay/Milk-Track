@@ -629,3 +629,164 @@
     max-width: 800px;
   }
 }
+
+/* AI Records Styles */
+.ai-form-container {
+  background: white;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.ai-form-container h3 {
+  margin: 0 0 1.5rem;
+  color: #667eea;
+  font-size: 1.25rem;
+}
+
+.ai-form {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.ai-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ai-form .form-group label {
+  font-weight: 600;
+  color: #4a5568;
+  font-size: 0.95rem;
+}
+
+.ai-form .form-group input {
+  padding: 0.875rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.2s;
+}
+
+.ai-form .form-group input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.add-button {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-button:active {
+  transform: scale(0.98);
+}
+
+.ai-records-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+
+.ai-record-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.record-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.animal-tag,
+.ai-date,
+.created-date {
+  display: flex;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.animal-tag .label,
+.ai-date .label,
+.created-date .label {
+  font-size: 0.85rem;
+  color: #718096;
+  font-weight: 500;
+}
+
+.animal-tag .value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.ai-date .value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.created-date .value {
+  font-size: 0.85rem;
+  color: #a0aec0;
+}
+
+.delete-button {
+  padding: 0.625rem 1rem;
+  background: #f56565;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.delete-button:hover {
+  background: #e53e3e;
+}
+
+.delete-button:active {
+  transform: scale(0.95);
+}
+
+@media (min-width: 640px) {
+  .ai-records-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ai-form {
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .ai-form .submit-button {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ai-records-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

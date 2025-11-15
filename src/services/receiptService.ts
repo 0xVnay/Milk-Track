@@ -19,24 +19,30 @@ export interface Receipt {
 export const saveReceipt = async (
   userId: string,
   receiptData: Omit<Receipt, "id" | "user_id" | "created_at">,
-  imageBlob: Blob
+  imageBlob?: Blob
 ): Promise<string> => {
   try {
-    // Upload image to Supabase Storage
-    const fileName = `${userId}/${Date.now()}.jpg`;
-    const { error: uploadError } = await supabase.storage
-      .from("receipts")
-      .upload(fileName, imageBlob, {
-        contentType: "image/jpeg",
-        cacheControl: "3600",
-      });
+    let publicUrl = '';
 
-    if (uploadError) throw uploadError;
+    // Upload image to Supabase Storage if provided
+    if (imageBlob) {
+      const fileName = `${userId}/${Date.now()}.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from("receipts")
+        .upload(fileName, imageBlob, {
+          contentType: "image/jpeg",
+          cacheControl: "3600",
+        });
 
-    // Get public URL
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from("receipts").getPublicUrl(fileName);
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl: url } } = supabase.storage
+        .from("receipts")
+        .getPublicUrl(fileName);
+
+      publicUrl = url;
+    }
 
     // Save receipt data to Supabase database
     const { data, error } = await supabase
