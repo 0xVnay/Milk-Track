@@ -22,6 +22,20 @@ export interface OrganizationMember {
   role: 'admin' | 'member';
 }
 
+interface UserOrganizationWithOrg {
+  organization_id: string;
+  role: 'admin' | 'member';
+  organizations: Organization;
+}
+
+interface UserOrganizationWithUser {
+  user_id: string;
+  role: 'admin' | 'member';
+  users: {
+    email: string;
+  } | null;
+}
+
 /**
  * Get all organizations the current user belongs to
  */
@@ -45,7 +59,7 @@ export const getUserOrganizations = async (userId: string): Promise<Organization
     if (error) throw error;
 
     // Transform the data to return just the organizations
-    return data?.map((item: any) => item.organizations) || [];
+    return data?.map((item: UserOrganizationWithOrg) => item.organizations) || [];
   } catch (error) {
     console.error("Error fetching user organizations:", error);
     throw error;
@@ -73,7 +87,7 @@ export const getOrganizationMembers = async (
     if (error) throw error;
 
     // Transform the data to return member information
-    return data?.map((item: any) => ({
+    return data?.map((item: UserOrganizationWithUser) => ({
       user_id: item.user_id,
       email: item.users?.email || 'Unknown',
       role: item.role

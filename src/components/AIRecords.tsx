@@ -37,7 +37,7 @@ export const AIRecords = () => {
     }
   };
 
-  const handleSubmit = async (values: { animalTag: string; aiDate: string }, { resetForm }: any) => {
+  const handleSubmit = async (values: { animalTag: string; aiDate: string }, { resetForm }: { resetForm: () => void }) => {
     if (!user || !currentOrganization) return;
 
     try {

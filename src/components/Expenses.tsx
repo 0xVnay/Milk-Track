@@ -62,7 +62,7 @@ export const Expenses = () => {
       payerName: string;
       details: string;
     },
-    { resetForm }: any
+    { resetForm }: { resetForm: () => void }
   ) => {
     if (!user || !currentOrganization) return;
 
@@ -193,7 +193,7 @@ export const Expenses = () => {
                     type="number"
                     step="any"
                     placeholder="0"
-                    onChange={(e: any) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       setFieldValue('quantity', e.target.value);
                       if (values.rate) {
                         setFieldValue('amount', calculateAmount(e.target.value, values.rate));
@@ -209,7 +209,7 @@ export const Expenses = () => {
                     type="number"
                     step="any"
                     placeholder="0.00"
-                    onChange={(e: any) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       setFieldValue('rate', e.target.value);
                       if (values.quantity) {
                         setFieldValue('amount', calculateAmount(values.quantity, e.target.value));
