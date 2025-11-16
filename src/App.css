@@ -902,6 +902,122 @@
   transform: scale(0.95);
 }
 
+/* Table styles for expenses */
+.table-container {
+  overflow-x: auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.expenses-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.expenses-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.expenses-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.expenses-table tbody tr {
+  border-bottom: 1px solid #e2e8f0;
+  transition: background-color 0.2s;
+}
+
+.expenses-table tbody tr:hover {
+  background-color: #f7fafc;
+}
+
+.expenses-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.expenses-table td {
+  padding: 1rem;
+  color: #2d3748;
+}
+
+.delete-button-small {
+  padding: 0.5rem 0.875rem;
+  background: #f56565;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.delete-button-small:hover {
+  background: #e53e3e;
+}
+
+.delete-button-small:active {
+  transform: scale(0.95);
+}
+
+.details-toggle {
+  background: none;
+  border: none;
+  color: #667eea;
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+  transition: transform 0.2s;
+}
+
+.details-toggle:hover {
+  transform: scale(1.2);
+}
+
+.details-row {
+  background-color: #f7fafc !important;
+}
+
+.details-row:hover {
+  background-color: #f7fafc !important;
+}
+
+.details-content {
+  padding: 1rem;
+  color: #4a5568;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  border-left: 3px solid #667eea;
+  background-color: white;
+  margin: 0.5rem;
+  border-radius: 6px;
+}
+
+/* Mobile responsive table */
+@media (max-width: 768px) {
+  .expenses-table {
+    font-size: 0.75rem;
+  }
+
+  .expenses-table th,
+  .expenses-table td {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .delete-button-small {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.7rem;
+  }
+}
+
 @media (min-width: 640px) {
   .ai-records-grid {
     grid-template-columns: repeat(2, 1fr);

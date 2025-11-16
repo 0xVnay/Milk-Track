@@ -6,6 +6,7 @@ import { Login } from "./components/Login";
 import { Records } from "./components/Records";
 import { AIRecords } from "./components/AIRecords";
 import { DewormingRecords } from "./components/DewormingRecords";
+import { Expenses } from "./components/Expenses";
 import { saveReceipt } from "./services/receiptService";
 import "./App.css";
 
@@ -22,7 +23,7 @@ interface ParsedData {
   amount?: string;
 }
 
-type ViewType = "upload" | "records" | "ai-records" | "deworming-records";
+type ViewType = "upload" | "records" | "ai-records" | "deworming-records" | "expenses";
 
 function App() {
   const { user, loading: authLoading, logout } = useAuth();
@@ -324,6 +325,7 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
     { id: "records" as ViewType, label: "Milk Records", icon: "🥛" },
     { id: "ai-records" as ViewType, label: "AI Records", icon: "🐄" },
     { id: "deworming-records" as ViewType, label: "Deworming", icon: "💊" },
+    { id: "expenses" as ViewType, label: "Expenses", icon: "💰" },
   ];
 
   const handleMenuItemClick = (viewId: ViewType) => {
@@ -387,6 +389,8 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
           <AIRecords />
         ) : currentView === "deworming-records" ? (
           <DewormingRecords />
+        ) : currentView === "expenses" ? (
+          <Expenses />
         ) : (
           <>
             {!selectedImage && !parsedData ? (
