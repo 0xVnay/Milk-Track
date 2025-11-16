@@ -1,10 +1,11 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Formik, Form, Field } from "formik";
 import { useAuth } from "./contexts/AuthContext";
 import { Login } from "./components/Login";
 import { Records } from "./components/Records";
 import { AIRecords } from "./components/AIRecords";
+import { DewormingRecords } from "./components/DewormingRecords";
 import { saveReceipt } from "./services/receiptService";
 import "./App.css";
 
@@ -21,11 +22,12 @@ interface ParsedData {
   amount?: string;
 }
 
+type ViewType = "upload" | "records" | "ai-records" | "deworming-records";
+
 function App() {
   const { user, loading: authLoading, logout } = useAuth();
-  const [currentView, setCurrentView] = useState<"upload" | "records" | "ai-records">(
-    "upload"
-  );
+  const [currentView, setCurrentView] = useState<ViewType>("upload");
+  const [showMenu, setShowMenu] = useState(false);
   const [entryMode, setEntryMode] = useState<"camera" | "manual">("camera");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [compressedBlob, setCompressedBlob] = useState<Blob | null>(null);
@@ -35,6 +37,24 @@ function App() {
   const [isSaving, setIsSaving] = useState(false);
   const [editValues, setEditValues] = useState<Partial<ParsedData>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
 
   // Show loading while checking auth
   if (authLoading) {
@@ -299,6 +319,20 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
     }
   };
 
+  const menuItems = [
+    { id: "upload" as ViewType, label: "Upload Receipt", icon: "📸" },
+    { id: "records" as ViewType, label: "Milk Records", icon: "🥛" },
+    { id: "ai-records" as ViewType, label: "AI Records", icon: "🐄" },
+    { id: "deworming-records" as ViewType, label: "Deworming", icon: "💊" },
+  ];
+
+  const handleMenuItemClick = (viewId: ViewType) => {
+    setCurrentView(viewId);
+    setShowMenu(false);
+  };
+
+  const currentMenuItem = menuItems.find(item => item.id === currentView);
+
   return (
     <div className="app-container">
       <header className="app-header">
@@ -316,25 +350,33 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
             Logout
           </button>
         </div>
-        <nav className="nav-tabs">
+
+        <nav className="nav-menu" ref={menuRef}>
           <button
-            className={`nav-tab ${currentView === "upload" ? "active" : ""}`}
-            onClick={() => setCurrentView("upload")}
+            className="menu-toggle"
+            onClick={() => setShowMenu(!showMenu)}
           >
-            Upload Receipt
+            <span className="current-view">
+              <span className="icon">{currentMenuItem?.icon}</span>
+              <span className="label">{currentMenuItem?.label}</span>
+            </span>
+            <span className={`arrow ${showMenu ? 'open' : ''}`}>▼</span>
           </button>
-          <button
-            className={`nav-tab ${currentView === "records" ? "active" : ""}`}
-            onClick={() => setCurrentView("records")}
-          >
-            Milk Records
-          </button>
-          <button
-            className={`nav-tab ${currentView === "ai-records" ? "active" : ""}`}
-            onClick={() => setCurrentView("ai-records")}
-          >
-            AI Records
-          </button>
+
+          {showMenu && (
+            <div className="menu-dropdown">
+              {menuItems.map((item) => (
+                <button
+                  key={item.id}
+                  className={`menu-item ${currentView === item.id ? "active" : ""}`}
+                  onClick={() => handleMenuItemClick(item.id)}
+                >
+                  <span className="icon">{item.icon}</span>
+                  <span className="label">{item.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
         </nav>
       </header>
 
@@ -343,6 +385,8 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
           <Records />
         ) : currentView === "ai-records" ? (
           <AIRecords />
+        ) : currentView === "deworming-records" ? (
+          <DewormingRecords />
         ) : (
           <>
             {!selectedImage && !parsedData ? (
