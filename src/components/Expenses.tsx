@@ -8,6 +8,7 @@ import {
   deleteExpense,
 } from '../services/expenseService';
 import type { Expense } from '../services/expenseService';
+import { getOrganizationMembers, type OrganizationMember } from '../services/organizationService';
 
 export const Expenses = () => {
   const { user } = useAuth();
@@ -16,10 +17,12 @@ export const Expenses = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [members, setMembers] = useState<OrganizationMember[]>([]);
 
   useEffect(() => {
     if (user && currentOrganization) {
       loadExpenses();
+      loadMembers();
     }
   }, [user, currentOrganization]);
 
@@ -38,6 +41,17 @@ export const Expenses = () => {
     }
   };
 
+  const loadMembers = async () => {
+    if (!currentOrganization) return;
+
+    try {
+      const data = await getOrganizationMembers(currentOrganization.id);
+      setMembers(data);
+    } catch (error) {
+      console.error('Error loading organization members:', error);
+    }
+  };
+
   const handleSubmit = async (
     values: {
       expenseName: string;
@@ -45,6 +59,7 @@ export const Expenses = () => {
       quantity: string;
       rate: string;
       amount: string;
+      payerName: string;
       details: string;
     },
     { resetForm }: any
@@ -60,6 +75,7 @@ export const Expenses = () => {
         values.amount,
         values.quantity || undefined,
         values.rate || undefined,
+        values.payerName || undefined,
         values.details || undefined
       );
       alert('Expense saved successfully!');
@@ -144,6 +160,7 @@ export const Expenses = () => {
               quantity: '',
               rate: '',
               amount: '',
+              payerName: user?.email || '',
               details: '',
             }}
             onSubmit={handleSubmit}
@@ -212,6 +229,28 @@ export const Expenses = () => {
                   />
                 </div>
 
+                <div className="form-group">
+                  <label>Paid By (Optional)</label>
+                  <Field
+                    as="select"
+                    name="payerName"
+                    className="payer-select"
+                  >
+                    <option value="">-- Select Member --</option>
+                    {members.map((member) => (
+                      <option
+                        key={member.user_id}
+                        value={member.email}
+                        className={member.user_id === user?.id ? 'current-user' : ''}
+                      >
+                        {member.email}
+                        {member.user_id === user?.id ? ' (You)' : ''}
+                        {member.role === 'admin' ? ' • Admin' : ''}
+                      </option>
+                    ))}
+                  </Field>
+                </div>
+
                 <div className="form-group full-width">
                   <label>Details (Optional)</label>
                   <Field
@@ -247,6 +286,7 @@ export const Expenses = () => {
                   <th>Qty</th>
                   <th>Rate</th>
                   <th>Amount</th>
+                  <th>Paid By</th>
                   <th>Details</th>
                   <th>Action</th>
                 </tr>
@@ -260,6 +300,7 @@ export const Expenses = () => {
                       <td>{expense.quantity || '-'}</td>
                       <td>{expense.rate ? `₹${expense.rate}` : '-'}</td>
                       <td style={{ fontWeight: 700, color: '#764ba2' }}>₹{expense.amount}</td>
+                      <td>{expense.payer_name || '-'}</td>
                       <td>
                         {expense.details ? (
                           <button
@@ -283,7 +324,7 @@ export const Expenses = () => {
                     </tr>
                     {expandedRow === expense.id && expense.details && (
                       <tr className="details-row">
-                        <td colSpan={7}>
+                        <td colSpan={8}>
                           <div className="details-content">
                             {expense.details}
                           </div>

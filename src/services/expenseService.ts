@@ -9,6 +9,7 @@ export interface Expense {
   quantity?: string;
   rate?: string;
   amount: string;
+  payer_name?: string;
   details?: string;
   created_at?: string;
 }
@@ -21,6 +22,7 @@ export const saveExpense = async (
   amount: string,
   quantity?: string,
   rate?: string,
+  payerName?: string,
   details?: string
 ): Promise<string> => {
   try {
@@ -35,6 +37,7 @@ export const saveExpense = async (
           quantity: quantity,
           rate: rate,
           amount: amount,
+          payer_name: payerName,
           details: details,
         },
       ])

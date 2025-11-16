@@ -16,6 +16,12 @@ export interface UserOrganization {
   created_at?: string;
 }
 
+export interface OrganizationMember {
+  user_id: string;
+  email: string;
+  role: 'admin' | 'member';
+}
+
 /**
  * Get all organizations the current user belongs to
  */
@@ -42,6 +48,38 @@ export const getUserOrganizations = async (userId: string): Promise<Organization
     return data?.map((item: any) => item.organizations) || [];
   } catch (error) {
     console.error("Error fetching user organizations:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get all members of an organization
+ */
+export const getOrganizationMembers = async (
+  organizationId: string
+): Promise<OrganizationMember[]> => {
+  try {
+    const { data, error } = await supabase
+      .from("user_organizations")
+      .select(`
+        user_id,
+        role,
+        users:user_id (
+          email
+        )
+      `)
+      .eq("organization_id", organizationId);
+
+    if (error) throw error;
+
+    // Transform the data to return member information
+    return data?.map((item: any) => ({
+      user_id: item.user_id,
+      email: item.users?.email || 'Unknown',
+      role: item.role
+    })) || [];
+  } catch (error) {
+    console.error("Error fetching organization members:", error);
     throw error;
   }
 };
