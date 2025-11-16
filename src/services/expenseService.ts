@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 export interface Expense {
   id?: string;
   user_id: string;
+  organization_id: string;
   expense_name: string;
   expense_date: string;
   quantity?: string;
@@ -14,6 +15,7 @@ export interface Expense {
 
 export const saveExpense = async (
   userId: string,
+  organizationId: string,
   expenseName: string,
   expenseDate: string,
   amount: string,
@@ -27,6 +29,7 @@ export const saveExpense = async (
       .insert([
         {
           user_id: userId,
+          organization_id: organizationId,
           expense_name: expenseName,
           expense_date: expenseDate,
           quantity: quantity,
@@ -47,12 +50,12 @@ export const saveExpense = async (
   }
 };
 
-export const getUserExpenses = async (userId: string): Promise<Expense[]> => {
+export const getUserExpenses = async (organizationId: string): Promise<Expense[]> => {
   try {
     const { data, error } = await supabase
       .from("expenses")
       .select("*")
-      .eq("user_id", userId)
+      .eq("organization_id", organizationId)
       .order("expense_date", { ascending: false });
 
     if (error) throw error;

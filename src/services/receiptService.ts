@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 export interface Receipt {
   id?: string;
   user_id: string;
+  organization_id: string;
   date: string;
   quantity: string;
   fat: string;
@@ -18,7 +19,8 @@ export interface Receipt {
 
 export const saveReceipt = async (
   userId: string,
-  receiptData: Omit<Receipt, "id" | "user_id" | "created_at">,
+  organizationId: string,
+  receiptData: Omit<Receipt, "id" | "user_id" | "organization_id" | "created_at">,
   imageBlob?: Blob
 ): Promise<string> => {
   try {
@@ -50,6 +52,7 @@ export const saveReceipt = async (
       .insert([
         {
           user_id: userId,
+          organization_id: organizationId,
           date: receiptData.date,
           quantity: receiptData.quantity,
           fat: receiptData.fat,
@@ -74,12 +77,12 @@ export const saveReceipt = async (
   }
 };
 
-export const getUserReceipts = async (userId: string): Promise<Receipt[]> => {
+export const getUserReceipts = async (organizationId: string): Promise<Receipt[]> => {
   try {
     const { data, error } = await supabase
       .from("receipts")
       .select("*")
-      .eq("user_id", userId)
+      .eq("organization_id", organizationId)
       .order("created_at", { ascending: false });
 
     if (error) throw error;

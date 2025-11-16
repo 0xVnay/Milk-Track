@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 export interface AIRecord {
   id?: string;
   user_id: string;
+  organization_id: string;
   animal_tag: string;
   ai_date: string;
   created_at?: string;
@@ -10,6 +11,7 @@ export interface AIRecord {
 
 export const saveAIRecord = async (
   userId: string,
+  organizationId: string,
   animalTag: string,
   aiDate: string
 ): Promise<string> => {
@@ -19,6 +21,7 @@ export const saveAIRecord = async (
       .insert([
         {
           user_id: userId,
+          organization_id: organizationId,
           animal_tag: animalTag,
           ai_date: aiDate,
         },
@@ -35,12 +38,12 @@ export const saveAIRecord = async (
   }
 };
 
-export const getUserAIRecords = async (userId: string): Promise<AIRecord[]> => {
+export const getUserAIRecords = async (organizationId: string): Promise<AIRecord[]> => {
   try {
     const { data, error } = await supabase
       .from("ai_records")
       .select("*")
-      .eq("user_id", userId)
+      .eq("organization_id", organizationId)
       .order("ai_date", { ascending: false });
 
     if (error) throw error;

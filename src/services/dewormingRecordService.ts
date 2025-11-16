@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase";
 export interface DewormingRecord {
   id?: string;
   user_id: string;
+  organization_id: string;
   animal_tag: string;
   deworming_date: string;
   medicine_name?: string;
@@ -12,6 +13,7 @@ export interface DewormingRecord {
 
 export const saveDewormingRecord = async (
   userId: string,
+  organizationId: string,
   animalTag: string,
   dewormingDate: string,
   medicineName?: string,
@@ -23,6 +25,7 @@ export const saveDewormingRecord = async (
       .insert([
         {
           user_id: userId,
+          organization_id: organizationId,
           animal_tag: animalTag,
           deworming_date: dewormingDate,
           medicine_name: medicineName,
@@ -41,12 +44,12 @@ export const saveDewormingRecord = async (
   }
 };
 
-export const getUserDewormingRecords = async (userId: string): Promise<DewormingRecord[]> => {
+export const getUserDewormingRecords = async (organizationId: string): Promise<DewormingRecord[]> => {
   try {
     const { data, error } = await supabase
       .from("deworming_records")
       .select("*")
-      .eq("user_id", userId)
+      .eq("organization_id", organizationId)
       .order("deworming_date", { ascending: false });
 
     if (error) throw error;
