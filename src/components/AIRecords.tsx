@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Formik, Form, Field } from 'formik';
 import { useAuth } from '../contexts/AuthContext';
+import { useOrganization } from '../contexts/OrganizationContext';
 import {
   getUserAIRecords,
   saveAIRecord,
@@ -10,22 +11,23 @@ import type { AIRecord } from '../services/aiRecordService';
 
 export const AIRecords = () => {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [records, setRecords] = useState<AIRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (user && currentOrganization) {
       loadRecords();
     }
-  }, [user]);
+  }, [user, currentOrganization]);
 
   const loadRecords = async () => {
-    if (!user) return;
+    if (!user || !currentOrganization) return;
 
     try {
       setLoading(true);
-      const data = await getUserAIRecords(user.id);
+      const data = await getUserAIRecords(currentOrganization.id);
       setRecords(data);
     } catch (error) {
       console.error('Error loading AI records:', error);
@@ -36,10 +38,10 @@ export const AIRecords = () => {
   };
 
   const handleSubmit = async (values: { animalTag: string; aiDate: string }, { resetForm }: any) => {
-    if (!user) return;
+    if (!user || !currentOrganization) return;
 
     try {
-      await saveAIRecord(user.id, values.animalTag, values.aiDate);
+      await saveAIRecord(user.id, currentOrganization.id, values.animalTag, values.aiDate);
       alert('AI Record saved successfully!');
       resetForm();
       setShowForm(false);
@@ -68,6 +70,15 @@ export const AIRecords = () => {
       <div className="loading-screen">
         <div className="spinner"></div>
         <p>Loading AI records...</p>
+      </div>
+    );
+  }
+
+  if (!currentOrganization) {
+    return (
+      <div className="empty-state">
+        <p>No organization selected</p>
+        <p className="empty-hint">Please select or create an organization first</p>
       </div>
     );
   }

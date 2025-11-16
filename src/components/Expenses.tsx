@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Formik, Form, Field } from 'formik';
 import { useAuth } from '../contexts/AuthContext';
+import { useOrganization } from '../contexts/OrganizationContext';
 import {
   getUserExpenses,
   saveExpense,
@@ -10,23 +11,24 @@ import type { Expense } from '../services/expenseService';
 
 export const Expenses = () => {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user) {
+    if (user && currentOrganization) {
       loadExpenses();
     }
-  }, [user]);
+  }, [user, currentOrganization]);
 
   const loadExpenses = async () => {
-    if (!user) return;
+    if (!user || !currentOrganization) return;
 
     try {
       setLoading(true);
-      const data = await getUserExpenses(user.id);
+      const data = await getUserExpenses(currentOrganization.id);
       setExpenses(data);
     } catch (error) {
       console.error('Error loading expenses:', error);
@@ -47,11 +49,12 @@ export const Expenses = () => {
     },
     { resetForm }: any
   ) => {
-    if (!user) return;
+    if (!user || !currentOrganization) return;
 
     try {
       await saveExpense(
         user.id,
+        currentOrganization.id,
         values.expenseName,
         values.expenseDate,
         values.amount,
@@ -106,6 +109,15 @@ export const Expenses = () => {
       <div className="loading-screen">
         <div className="spinner"></div>
         <p>Loading expenses...</p>
+      </div>
+    );
+  }
+
+  if (!currentOrganization) {
+    return (
+      <div className="empty-state">
+        <p>No organization selected</p>
+        <p className="empty-hint">Please select or create an organization first</p>
       </div>
     );
   }

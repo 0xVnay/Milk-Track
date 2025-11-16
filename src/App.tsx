@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Formik, Form, Field } from "formik";
 import { useAuth } from "./contexts/AuthContext";
+import { useOrganization } from "./contexts/OrganizationContext";
 import { Login } from "./components/Login";
 import { Records } from "./components/Records";
 import { AIRecords } from "./components/AIRecords";
@@ -23,10 +24,16 @@ interface ParsedData {
   amount?: string;
 }
 
-type ViewType = "upload" | "records" | "ai-records" | "deworming-records" | "expenses";
+type ViewType =
+  | "upload"
+  | "records"
+  | "ai-records"
+  | "deworming-records"
+  | "expenses";
 
 function App() {
   const { user, loading: authLoading, logout } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [currentView, setCurrentView] = useState<ViewType>("upload");
   const [showMenu, setShowMenu] = useState(false);
   const [entryMode, setEntryMode] = useState<"camera" | "manual">("camera");
@@ -49,11 +56,11 @@ function App() {
     };
 
     if (showMenu) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [showMenu]);
 
@@ -271,27 +278,27 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
 
   const handleSaveEdit = () => {
     const updatedData: ParsedData = {
-      rawText: parsedData?.rawText || 'Manual edit',
-      date: editValues.date || '',
-      quantity: editValues.quantity || '',
-      fat: editValues.fat || '',
-      clr: editValues.clr || '',
+      rawText: parsedData?.rawText || "Manual edit",
+      date: editValues.date || "",
+      quantity: editValues.quantity || "",
+      fat: editValues.fat || "",
+      clr: editValues.clr || "",
       fatKg: editValues.fatKg,
       snfKg: editValues.snfKg,
       baseRate: editValues.baseRate,
-      rate: editValues.rate || '',
-      amount: editValues.amount || '',
+      rate: editValues.rate || "",
+      amount: editValues.amount || "",
     };
     setParsedData(updatedData);
     setIsEditing(false);
   };
 
   const handleFieldChange = (field: keyof ParsedData, value: string) => {
-    setEditValues(prev => ({ ...prev, [field]: value }));
+    setEditValues((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSaveReceipt = async () => {
-    if (!user || !parsedData) return;
+    if (!user || !parsedData || !currentOrganization) return;
 
     setIsSaving(true);
     try {
@@ -309,7 +316,12 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
       };
 
       // Pass the image blob only if it exists (from camera mode)
-      await saveReceipt(user.id, receiptData, compressedBlob || undefined);
+      await saveReceipt(
+        user.id,
+        currentOrganization.id,
+        receiptData,
+        compressedBlob || undefined
+      );
       alert("Receipt saved successfully!");
       handleReset();
     } catch (error) {
@@ -323,9 +335,9 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
   const menuItems = [
     { id: "upload" as ViewType, label: "Upload Receipt", icon: "📸" },
     { id: "records" as ViewType, label: "Milk Records", icon: "🥛" },
+    { id: "expenses" as ViewType, label: "Expenses", icon: "💰" },
     { id: "ai-records" as ViewType, label: "AI Records", icon: "🐄" },
     { id: "deworming-records" as ViewType, label: "Deworming", icon: "💊" },
-    { id: "expenses" as ViewType, label: "Expenses", icon: "💰" },
   ];
 
   const handleMenuItemClick = (viewId: ViewType) => {
@@ -333,7 +345,7 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
     setShowMenu(false);
   };
 
-  const currentMenuItem = menuItems.find(item => item.id === currentView);
+  const currentMenuItem = menuItems.find((item) => item.id === currentView);
 
   return (
     <div className="app-container">
@@ -362,7 +374,7 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
               <span className="icon">{currentMenuItem?.icon}</span>
               <span className="label">{currentMenuItem?.label}</span>
             </span>
-            <span className={`arrow ${showMenu ? 'open' : ''}`}>▼</span>
+            <span className={`arrow ${showMenu ? "open" : ""}`}>▼</span>
           </button>
 
           {showMenu && (
@@ -370,7 +382,9 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
               {menuItems.map((item) => (
                 <button
                   key={item.id}
-                  className={`menu-item ${currentView === item.id ? "active" : ""}`}
+                  className={`menu-item ${
+                    currentView === item.id ? "active" : ""
+                  }`}
                   onClick={() => handleMenuItemClick(item.id)}
                 >
                   <span className="icon">{item.icon}</span>
@@ -443,11 +457,11 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
                     <Formik
                       initialValues={{
                         date: new Date().toISOString().split("T")[0],
-                        quantity: '',
-                        fat: '',
-                        snfKg: '',
-                        rate: '',
-                        amount: ''
+                        quantity: "",
+                        fat: "",
+                        snfKg: "",
+                        rate: "",
+                        amount: "",
                       }}
                       onSubmit={(values) => {
                         // Calculate CLR from SNF if SNF is provided
@@ -584,12 +598,16 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
                           <input
                             type="text"
                             className="edit-input"
-                            value={editValues.date || ''}
-                            onChange={(e) => handleFieldChange('date', e.target.value)}
+                            value={editValues.date || ""}
+                            onChange={(e) =>
+                              handleFieldChange("date", e.target.value)
+                            }
                             placeholder="DD/MM/YYYY"
                           />
                         ) : (
-                          <span className="value">{parsedData.date || "-"}</span>
+                          <span className="value">
+                            {parsedData.date || "-"}
+                          </span>
                         )}
                       </div>
 
@@ -600,13 +618,17 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
                             type="number"
                             step="any"
                             className="edit-input"
-                            value={editValues.quantity || ''}
-                            onChange={(e) => handleFieldChange('quantity', e.target.value)}
+                            value={editValues.quantity || ""}
+                            onChange={(e) =>
+                              handleFieldChange("quantity", e.target.value)
+                            }
                             placeholder="0.0"
                           />
                         ) : (
                           <span className="value">
-                            {parsedData.quantity ? `${parsedData.quantity} Ltr` : "-"}
+                            {parsedData.quantity
+                              ? `${parsedData.quantity} Ltr`
+                              : "-"}
                           </span>
                         )}
                       </div>
@@ -618,8 +640,10 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
                             type="number"
                             step="any"
                             className="edit-input"
-                            value={editValues.fat || ''}
-                            onChange={(e) => handleFieldChange('fat', e.target.value)}
+                            value={editValues.fat || ""}
+                            onChange={(e) =>
+                              handleFieldChange("fat", e.target.value)
+                            }
                             placeholder="0.0"
                           />
                         ) : (
@@ -636,8 +660,10 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
                             type="number"
                             step="any"
                             className="edit-input"
-                            value={editValues.clr || ''}
-                            onChange={(e) => handleFieldChange('clr', e.target.value)}
+                            value={editValues.clr || ""}
+                            onChange={(e) =>
+                              handleFieldChange("clr", e.target.value)
+                            }
                             placeholder="0.0"
                           />
                         ) : (
@@ -652,8 +678,10 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
                             type="number"
                             step="any"
                             className="edit-input"
-                            value={editValues.fatKg || ''}
-                            onChange={(e) => handleFieldChange('fatKg', e.target.value)}
+                            value={editValues.fatKg || ""}
+                            onChange={(e) =>
+                              handleFieldChange("fatKg", e.target.value)
+                            }
                             placeholder="0.00"
                           />
                         ) : (
@@ -670,8 +698,10 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
                             type="number"
                             step="any"
                             className="edit-input"
-                            value={editValues.snfKg || ''}
-                            onChange={(e) => handleFieldChange('snfKg', e.target.value)}
+                            value={editValues.snfKg || ""}
+                            onChange={(e) =>
+                              handleFieldChange("snfKg", e.target.value)
+                            }
                             placeholder="0.00"
                           />
                         ) : (
@@ -688,13 +718,17 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
                             type="number"
                             step="any"
                             className="edit-input"
-                            value={editValues.baseRate || ''}
-                            onChange={(e) => handleFieldChange('baseRate', e.target.value)}
+                            value={editValues.baseRate || ""}
+                            onChange={(e) =>
+                              handleFieldChange("baseRate", e.target.value)
+                            }
                             placeholder="0.00"
                           />
                         ) : (
                           <span className="value">
-                            {parsedData.baseRate ? `₹${parsedData.baseRate}` : "-"}
+                            {parsedData.baseRate
+                              ? `₹${parsedData.baseRate}`
+                              : "-"}
                           </span>
                         )}
                       </div>
@@ -706,8 +740,10 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
                             type="number"
                             step="any"
                             className="edit-input"
-                            value={editValues.rate || ''}
-                            onChange={(e) => handleFieldChange('rate', e.target.value)}
+                            value={editValues.rate || ""}
+                            onChange={(e) =>
+                              handleFieldChange("rate", e.target.value)
+                            }
                             placeholder="0.0"
                           />
                         ) : (
@@ -724,8 +760,10 @@ Only include fields that are clearly visible in the image. Return ONLY the JSON 
                             type="number"
                             step="any"
                             className="edit-input"
-                            value={editValues.amount || ''}
-                            onChange={(e) => handleFieldChange('amount', e.target.value)}
+                            value={editValues.amount || ""}
+                            onChange={(e) =>
+                              handleFieldChange("amount", e.target.value)
+                            }
                             placeholder="0"
                           />
                         ) : (

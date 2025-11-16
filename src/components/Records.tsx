@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
+import { useOrganization } from '../contexts/OrganizationContext'
 import { getUserReceipts, type Receipt } from '../services/receiptService'
 import { format, parse } from 'date-fns'
 import './Records.css'
@@ -10,22 +11,23 @@ interface GroupedReceipts {
 
 export const Records = () => {
   const { user } = useAuth()
+  const { currentOrganization } = useOrganization()
   const [receipts, setReceipts] = useState<Receipt[]>([])
   const [loading, setLoading] = useState(true)
   const [globalFilter, setGlobalFilter] = useState('')
 
   useEffect(() => {
-    if (user) {
+    if (user && currentOrganization) {
       loadReceipts()
     }
-  }, [user])
+  }, [user, currentOrganization])
 
   const loadReceipts = async () => {
-    if (!user) return
+    if (!user || !currentOrganization) return
 
     setLoading(true)
     try {
-      const data = await getUserReceipts(user.id)
+      const data = await getUserReceipts(currentOrganization.id)
       setReceipts(data)
     } catch (error) {
       console.error('Error loading receipts:', error)
@@ -68,6 +70,15 @@ export const Records = () => {
       <div className="records-loading">
         <div className="spinner"></div>
         <p>Loading receipts...</p>
+      </div>
+    )
+  }
+
+  if (!currentOrganization) {
+    return (
+      <div className="empty-state">
+        <p>No organization selected</p>
+        <p className="empty-hint">Please select or create an organization first</p>
       </div>
     )
   }

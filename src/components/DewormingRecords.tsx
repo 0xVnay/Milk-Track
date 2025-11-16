@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Formik, Form, Field } from 'formik';
 import { useAuth } from '../contexts/AuthContext';
+import { useOrganization } from '../contexts/OrganizationContext';
 import {
   getUserDewormingRecords,
   saveDewormingRecord,
@@ -10,22 +11,23 @@ import type { DewormingRecord } from '../services/dewormingRecordService';
 
 export const DewormingRecords = () => {
   const { user } = useAuth();
+  const { currentOrganization } = useOrganization();
   const [records, setRecords] = useState<DewormingRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    if (user && currentOrganization) {
       loadRecords();
     }
-  }, [user]);
+  }, [user, currentOrganization]);
 
   const loadRecords = async () => {
-    if (!user) return;
+    if (!user || !currentOrganization) return;
 
     try {
       setLoading(true);
-      const data = await getUserDewormingRecords(user.id);
+      const data = await getUserDewormingRecords(currentOrganization.id);
       setRecords(data);
     } catch (error) {
       console.error('Error loading deworming records:', error);
@@ -39,11 +41,12 @@ export const DewormingRecords = () => {
     values: { animalTag: string; dewormingDate: string; medicineName: string; notes: string },
     { resetForm }: any
   ) => {
-    if (!user) return;
+    if (!user || !currentOrganization) return;
 
     try {
       await saveDewormingRecord(
         user.id,
+        currentOrganization.id,
         values.animalTag,
         values.dewormingDate,
         values.medicineName || undefined,
@@ -77,6 +80,15 @@ export const DewormingRecords = () => {
       <div className="loading-screen">
         <div className="spinner"></div>
         <p>Loading deworming records...</p>
+      </div>
+    );
+  }
+
+  if (!currentOrganization) {
+    return (
+      <div className="empty-state">
+        <p>No organization selected</p>
+        <p className="empty-hint">Please select or create an organization first</p>
       </div>
     );
   }
